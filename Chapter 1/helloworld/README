@@ -1,0 +1,7 @@
+1. Spring是对标EJB，很成功
+2. Spring 有一个大家族，包括Spring Framework, Spring Boot，Spring Cloud。
+3. https://spring.io/projects
+4. 至少使用Java8
+5. WebFlux支持异步编程模式
+6. Spring Cloud 是 Cloud Native 的大方向
+
