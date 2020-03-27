@@ -29,7 +29,7 @@ public class CoffeeOrder extends BaseEntity implements Serializable {
     @JoinTable(name = "T_ORDER_COFFEE")
     @OrderBy("id")
     private List<Coffee> items;
-    @Enumerated
+    @Enumerated // 对应创建的字段：state integer not null,
     @Column(nullable = false)
     private OrderState state;
 }

@@ -38,7 +38,7 @@ public class JpaDemoApplication implements ApplicationRunner {
 	}
 
 	@Override
-	@Transactional
+	@Transactional	// 解决下面说的LazyInitializationException问题
 	public void run(ApplicationArguments args) throws Exception {
 		initOrders();
 		findOrders();

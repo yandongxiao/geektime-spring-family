@@ -16,7 +16,7 @@ import java.io.Serializable;
 @Table(name = "T_MENU")
 @Builder
 @Data
-@ToString(callSuper = true)
+@ToString(callSuper = true)     // 打印实体的时候，把父类的字段也打印出来
 @NoArgsConstructor
 @AllArgsConstructor
 public class Coffee extends BaseEntity implements Serializable {

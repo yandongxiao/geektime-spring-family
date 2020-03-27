@@ -1,0 +1,89 @@
+================ Spring Data JPA =============
+1. JPA: Java Persistence API
+2. 它屏蔽了不同持久化API的差异，比如Hibernate、EJB等。它在OR Mapping之上，又做了一层抽象
+3. Spring Data 是一个模块群。Spring Data mongo, Spring Data redis 等
+4. Hibernate作为了它的后端实现
+
+================ JPA 操作 ====================
+
+1. 引入依赖
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jpa</artifactId>
+</dependency>
+
+2. 定义实体类。
+
+3. 定义Repository接口，用于操作实体.
+
+在与@SpringBootApplication相同的类上，添加@EnableJpaRepositories注解
+
+你定义的Repository可以继承下面的基类：CrudRepository<T, ID>, PagingAndSortingRepository<T, ID>, JpaRepository<T, ID>
+
+public interface CoffeeRepository extends CrudRepository<Coffee, Long> {}
+
+@NoRepositoryBean
+public interface BaseRepository<T, Long> extends PagingAndSortingRepository<T, Long> {
+    List<T> findTop3ByOrderByUpdateTimeDescIdAsc();
+}
+
+public interface CoffeeRepository extends BaseRepository<Coffee, Long> {}
+
+public interface CoffeeOrderRepository extends BaseRepository<CoffeeOrder, Long> {
+    List<CoffeeOrder> findByCustomerOrderById(String customer);
+    List<CoffeeOrder> findByItems_Name(String name);
+}
+
+===============  Mybatis =====================
+Mybatis最大的特点是：⽀持定制化SQL、存储过程和⾼级映射。
+如果SQL操作比较简单，可以使用JPA。一般情况下，使用Mybatis更通用。
+
+1. 引入依赖
+<dependency>
+    <groupId>org.mybatis.spring.boot</groupId>
+    <artifactId>mybatis-spring-boot-starter</artifactId>
+    <version>1.3.2</version>
+</dependency>
+
+2. 在与@SpringBootApplication相同的类上，添加@MapperScan("geektime.spring.data.mybatisdemo.mapper")
+    # 指定mapper映射文件. 你也可以通过注解的方式来指定：@MapperScan("geektime.spring.data.mybatisdemo.mapper")
+    mybatis.mapper-locations=classpath*:/mapper/**/*.xml
+    # 如果使用Mybatis Generator时，它的model和mapper目录都是自动生成的。
+    mybatis.type-aliases-package=geektime.spring.data.mybatis.model
+    # 如果PO对象的值不是基础类型，那么它无法作为一个字段，存在于表中。handler可以做这一层的映射
+    mybatis.type-handlers-package=geektime.spring.data.mybatis.handler
+    # 数据库中是create_time 转换成的对象是createTime. 反之亦然。
+    mybatis.configuration.map-underscore-to-camel-case=true
+
+3. 定义mapper
+        @Mapper
+        public interface CoffeeMapper {
+            @Insert("insert into t_coffee (name, price, create_time, update_time)"
+                    + "values (#{name}, #{price}, now(), now())")
+            @Options(useGeneratedKeys = true)
+            int save(Coffee coffee);
+
+            @Select("select * from t_coffee where id = #{id}")
+            @Results({
+                    @Result(id = true, column = "id", property = "id"),
+                    @Result(column = "create_time", property = "createTime"),
+                    // map-underscore-to-camel-case = true 可以实现一样的效果
+                    // @Result(column = "update_time", property = "updateTime"),
+            })
+            Coffee findById(@Param("id") Long id);
+        }
+
+====================== Mybatis Generator ==============
+0. 引入依赖
+		<dependency>
+			<groupId>org.mybatis.generator</groupId>
+			<artifactId>mybatis-generator-core</artifactId>
+			<version>1.3.7</version>
+		</dependency>
+1. 编写generatorConfig.xml, 放置在${basedir}/src/main/resources/generatorConfig.xml
+2. 执行：mvn mybatis-generator:generate
+
+
+
+
+
