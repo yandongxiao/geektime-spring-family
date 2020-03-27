@@ -120,5 +120,59 @@ Logging能诊断Hack应⽤⾏为。
 3. 在application.properties中配置数据源
 4. 参见ConnectionLogFilter，查看如何扩展Druid的接口功能
 
-==============================
+============================== Spring JDBC ===============================
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+		</dependency>
 
+Spring JDBC包的内容，主要分为四类：
+1. core，JdbcTemplate 等相关核⼼接⼝和类
+    jdbcTemplate.queryForObject("SELECT COUNT(*) FROM FOO", Long.class)
+    jdbcTemplate.queryForList("SELECT BAR FROM FOO", String.class)
+    jdbcTemplate.query
+    jdbcTemplate.update("INSERT INTO FOO (BAR) VALUES (?)", bar)
+
+    插入数据并返回主键ID: 定义一个bean，使用这个bean来插入数据库.
+    @Bean
+    @Autowired
+    public SimpleJdbcInsert simpleJdbcInsert(JdbcTemplate jdbcTemplate) {
+        return new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("FOO").usingGeneratedKeyColumns("ID");
+    }
+    Number id = simpleJdbcInsert.executeAndReturnKey(row);
+
+    批量插入的两种方式：
+        jdbcTemplate.batchUpdate
+        namedParameterJdbcTemplate.batchUpdate
+2. datasource，数据源相关的辅助类
+3. object，将基本的 JDBC 操作封装成对象
+4. support，错误码等其他辅助⼯具
+
+============================== Spring 事务抽象 ===========================
+无论你使用的是JDBC、Hibernate、myBatis；连接池使用的是DataSource、还是JTA，事务抽象给我们提供了一致的编程模型。
+Java中事务的传播特性有7种，默认是Require。事务的隔离特性：默认值是-1，就是以数据库的隔离特性为准。InnoDB数据库的隔离性是：可重复度。
+
+编程式事务：
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
+    transactionTemplate.execute(new TransactionCallbackWithoutResult() {
+        @Override
+        protected void doInTransactionWithoutResult(TransactionStatus transactionStatus) {
+            jdbcTemplate.execute("INSERT INTO FOO (ID, BAR) VALUES (1, 'aaa')");
+            log.info("COUNT IN TRANSACTION: {}", getCount());
+            transactionStatus.setRollbackOnly();
+        }
+    });
+
+声明式事务：
+    1. 开启事务注解：@EnableTransactionManagement(mode = AdviceMode.PROXY)
+    2. 在方法上，启动并提交事务@Transactional, 启动并回滚事务@Transactional(rollbackFor = RollbackException.class)
+    3. 注意：类内部的方法之间的调用(A --> B)，A是一个普通方法，B是一个有Transaction注解的方法，A调用B时，不会执行@Transaction注解逻辑。
+    4. 把自己的实例注入进来(在自己的类中，使用自己的实例)，内部方法调用改为直接调用注入的实例。即在Foo
+
+============================== Spring 数据库异常 =========================
+1. Spring 会将数据操作的异常转换为 DataAccessException
+2. ⽆论使⽤何种数据访问⽅式，都能使⽤⼀样的异常
+3. 如何自定义错误码对应的异常，参见errorcode-demo

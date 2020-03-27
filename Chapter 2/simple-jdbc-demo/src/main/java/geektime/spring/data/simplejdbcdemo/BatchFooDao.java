@@ -36,8 +36,7 @@ public class BatchFooDao {
         List<Foo> list = new ArrayList<>();
         list.add(Foo.builder().id(100L).bar("b-100").build());
         list.add(Foo.builder().id(101L).bar("b-101").build());
-        namedParameterJdbcTemplate
-                .batchUpdate("INSERT INTO FOO (ID, BAR) VALUES (:id, :bar)",
+        namedParameterJdbcTemplate.batchUpdate("INSERT INTO FOO (ID, BAR) VALUES (:id, :bar)",
                         SqlParameterSourceUtils.createBatch(list));
     }
 }
