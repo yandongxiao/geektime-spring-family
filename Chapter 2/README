@@ -1,0 +1,178 @@
+================================= datasource-demo ====================
+# 数据库驱动: H2
+# JDBC(Java Database Connectivity)
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+# Lombok
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+    </dependency>
+
+# 运维：actuator
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+
+# 接口：web
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+# 你可以直接在程序中使用的Bean
+	@Autowired
+	private DataSource dataSource;
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+# Spring Boot 做了相应的自动化配置，如：
+DataSourceAutoConfiguration
+DataSourceTransactionManagerAutoConfiguration
+JdbcTemplateAutoConfiguration
+
+================================ 自定义Bean(pure-spring-datasource-demo) ===========================
+pom.xml中没有引入Spring Boot, 也就没有了自动生成的bean. 你需要做以下事情：
+1. 指定ApplicationContext对应的文件：ApplicationContext applicationContext = new ClassPathXmlApplicationContext("applicationContext*.xml");
+2. 以代码的方式创建bean
+```
+    @Bean(destroyMethod = "close")
+    public DataSource dataSource() throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("driverClassName", "org.h2.Driver");
+        properties.setProperty("url", "jdbc:h2:mem:testdb");
+        properties.setProperty("username", "sa");
+        return BasicDataSourceFactory.createDataSource(properties);
+    }
+```
+3. 或者以配置的方式创建bean
+```
+    <context:component-scan base-package="geektime.spring.data" />
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+          destroy-method="close">
+        <property name="driverClassName" value="org.h2.Driver"/>
+        <property name="url" value="jdbc:h2:mem:testdb"/>
+        <property name="username" value="SA"/>
+        <property name="password" value=""/>
+    </bean>
+```
+
+===============================  在Spring Boot下配置多数据源 =========================
+
+1. 显式地声明，不要让Spring Boot创建Bean
+@SpringBootApplication(exclude = { DataSourceAutoConfiguration.class,
+        DataSourceTransactionManagerAutoConfiguration.class,
+        JdbcTemplateAutoConfiguration.class})
+
+2. 创建自己的Bean, 包括：DataSourceProperties, DataSource, PlatformTransactionManager
+    @Bean
+    @ConfigurationProperties("foo.datasource")
+    public DataSourceProperties fooDataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
+    @Bean
+    public DataSource fooDataSource() {
+        DataSourceProperties dataSourceProperties = fooDataSourceProperties();
+        log.info("foo datasource: {}", dataSourceProperties.getUrl());
+        return dataSourceProperties.initializeDataSourceBuilder().build();
+    }
+
+    @Bean
+    @Resource
+    public PlatformTransactionManager fooTxManager(DataSource fooDataSource) {
+        return new DataSourceTransactionManager(fooDataSource);
+    }
+3. 创建自己的另外DataSource对应的Bean。
+
+============================== 数据库连接池, Druid ===============================
+Druid连接池是阿⾥巴巴开源的数据库连接池项⽬。Druid连接池为监控⽽⽣，
+内置强⼤的监控功能，监控特性不影响性能。功能强⼤，能防SQL注⼊，内置
+Logging能诊断Hack应⽤⾏为。
+众多扩展点，⽅便进⾏定制
+1. 在POM中排除掉HikariCP
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+			<exclusions>
+				<exclusion>
+					<artifactId>HikariCP</artifactId>
+					<groupId>com.zaxxer</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+2. 在POM中加入对Druid的依赖
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>druid-spring-boot-starter</artifactId>
+			<version>1.1.10</version>
+		</dependency>
+	</dependencies>
+3. 在application.properties中配置数据源
+4. 参见ConnectionLogFilter，查看如何扩展Druid的接口功能
+
+============================== Spring JDBC ===============================
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+		</dependency>
+
+Spring JDBC包的内容，主要分为四类：
+1. core，JdbcTemplate 等相关核⼼接⼝和类
+    jdbcTemplate.queryForObject("SELECT COUNT(*) FROM FOO", Long.class)
+    jdbcTemplate.queryForList("SELECT BAR FROM FOO", String.class)
+    jdbcTemplate.query
+    jdbcTemplate.update("INSERT INTO FOO (BAR) VALUES (?)", bar)
+
+    插入数据并返回主键ID: 定义一个bean，使用这个bean来插入数据库.
+    @Bean
+    @Autowired
+    public SimpleJdbcInsert simpleJdbcInsert(JdbcTemplate jdbcTemplate) {
+        return new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("FOO").usingGeneratedKeyColumns("ID");
+    }
+    Number id = simpleJdbcInsert.executeAndReturnKey(row);
+
+    批量插入的两种方式：
+        jdbcTemplate.batchUpdate
+        namedParameterJdbcTemplate.batchUpdate
+2. datasource，数据源相关的辅助类
+3. object，将基本的 JDBC 操作封装成对象
+4. support，错误码等其他辅助⼯具
+
+============================== Spring 事务抽象 ===========================
+无论你使用的是JDBC、Hibernate、myBatis；连接池使用的是DataSource、还是JTA，事务抽象给我们提供了一致的编程模型。
+Java中事务的传播特性有7种，默认是Require。事务的隔离特性：默认值是-1，就是以数据库的隔离特性为准。InnoDB数据库的隔离性是：可重复度。
+
+编程式事务：
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
+    transactionTemplate.execute(new TransactionCallbackWithoutResult() {
+        @Override
+        protected void doInTransactionWithoutResult(TransactionStatus transactionStatus) {
+            jdbcTemplate.execute("INSERT INTO FOO (ID, BAR) VALUES (1, 'aaa')");
+            log.info("COUNT IN TRANSACTION: {}", getCount());
+            transactionStatus.setRollbackOnly();
+        }
+    });
+
+声明式事务：
+    1. 开启事务注解：@EnableTransactionManagement(mode = AdviceMode.PROXY)
+    2. 在方法上，启动并提交事务@Transactional, 启动并回滚事务@Transactional(rollbackFor = RollbackException.class)
+    3. 注意：类内部的方法之间的调用(A --> B)，A是一个普通方法，B是一个有Transaction注解的方法，A调用B时，不会执行@Transaction注解逻辑。
+    4. 把自己的实例注入进来(在自己的类中，使用自己的实例)，内部方法调用改为直接调用注入的实例。即在Foo
+
+============================== Spring 数据库异常 =========================
+1. Spring 会将数据操作的异常转换为 DataAccessException
+2. ⽆论使⽤何种数据访问⽅式，都能使⽤⼀样的异常
+3. 如何自定义错误码对应的异常，参见errorcode-demo
