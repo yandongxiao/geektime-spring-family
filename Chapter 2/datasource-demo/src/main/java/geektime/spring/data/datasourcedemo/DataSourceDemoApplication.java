@@ -31,9 +31,9 @@ public class DataSourceDemoApplication implements CommandLineRunner {
 	}
 
 	private void showConnection() throws SQLException {
-		log.info(dataSource.toString());
+		log.info(dataSource.toString()); // 查看连接池信息: HikariDataSource (HikariPool-1)
 		Connection conn = dataSource.getConnection();
-		log.info(conn.toString());
+		log.info(conn.toString());  // 查看某连接信息: HikariProxyConnection@702025003 wrapping conn0: url=jdbc:h2:mem:testdb user=SA
 		conn.close();
 	}
 
@@ -42,4 +42,3 @@ public class DataSourceDemoApplication implements CommandLineRunner {
 				.forEach(row -> log.info(row.toString()));
 	}
 }
-
