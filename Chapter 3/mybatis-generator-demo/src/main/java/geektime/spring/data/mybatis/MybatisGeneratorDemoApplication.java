@@ -25,51 +25,51 @@ import java.util.List;
 @Slf4j
 @MapperScan("geektime.spring.data.mybatis.mapper")
 public class MybatisGeneratorDemoApplication implements ApplicationRunner {
-	@Autowired
-	private CoffeeMapper coffeeMapper;
+    @Autowired
+    private CoffeeMapper coffeeMapper;
 
-	public static void main(String[] args) {
-		SpringApplication.run(MybatisGeneratorDemoApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(MybatisGeneratorDemoApplication.class, args);
+    }
 
-	@Override
-	public void run(ApplicationArguments args) throws Exception {
-//		generateArtifacts();
-		playWithArtifacts();
-	}
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        generateArtifacts();
+        playWithArtifacts();
+    }
 
-	private void generateArtifacts() throws Exception {
-		List<String> warnings = new ArrayList<>();
-		ConfigurationParser cp = new ConfigurationParser(warnings);
-		Configuration config = cp.parseConfiguration(
-				this.getClass().getResourceAsStream("/generatorConfig.xml"));
-		DefaultShellCallback callback = new DefaultShellCallback(true);
-		MyBatisGenerator myBatisGenerator = new MyBatisGenerator(config, callback, warnings);
-		myBatisGenerator.generate(null);
-	}
+    private void generateArtifacts() throws Exception {
+        List<String> warnings = new ArrayList<>();
+        ConfigurationParser cp = new ConfigurationParser(warnings);
+        Configuration config = cp.parseConfiguration(
+                this.getClass().getResourceAsStream("/generatorConfig.xml"));
+        DefaultShellCallback callback = new DefaultShellCallback(true);
+        MyBatisGenerator myBatisGenerator = new MyBatisGenerator(config, callback, warnings);
+        myBatisGenerator.generate(null);
+    }
 
-	private void playWithArtifacts() {
-		Coffee espresso = new Coffee()
-				.withName("espresso")
-				.withPrice(Money.of(CurrencyUnit.of("CNY"), 20.0))
-				.withCreateTime(new Date())
-				.withUpdateTime(new Date());
-		coffeeMapper.insert(espresso);
+    private void playWithArtifacts() {
+        Coffee espresso = new Coffee()
+                .withName("espresso")
+                .withPrice(Money.of(CurrencyUnit.of("CNY"), 20.0))
+                .withCreateTime(new Date())
+                .withUpdateTime(new Date());
+        coffeeMapper.insert(espresso);
 
-		Coffee latte = new Coffee()
-				.withName("latte")
-				.withPrice(Money.of(CurrencyUnit.of("CNY"), 30.0))
-				.withCreateTime(new Date())
-				.withUpdateTime(new Date());
-		coffeeMapper.insert(latte);
+        Coffee latte = new Coffee()
+                .withName("latte")
+                .withPrice(Money.of(CurrencyUnit.of("CNY"), 30.0))
+                .withCreateTime(new Date())
+                .withUpdateTime(new Date());
+        coffeeMapper.insert(latte);
 
-		Coffee s = coffeeMapper.selectByPrimaryKey(1L);
-		log.info("Coffee {}", s);
+        Coffee s = coffeeMapper.selectByPrimaryKey(1L);
+        log.info("Coffee {}", s);
 
-		CoffeeExample example = new CoffeeExample();
-		example.createCriteria().andNameEqualTo("latte");
-		List<Coffee> list = coffeeMapper.selectByExample(example);
-		list.forEach(e -> log.info("selectByExample: {}", e));
-	}
+        CoffeeExample example = new CoffeeExample();
+        example.createCriteria().andNameEqualTo("latte");
+        List<Coffee> list = coffeeMapper.selectByExample(example);
+        list.forEach(e -> log.info("selectByExample: {}", e));
+    }
 }
 

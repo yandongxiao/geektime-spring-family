@@ -81,7 +81,16 @@ Mybatis最大的特点是：⽀持定制化SQL、存储过程和⾼级映射。
 			<version>1.3.7</version>
 		</dependency>
 1. 编写generatorConfig.xml, 放置在${basedir}/src/main/resources/generatorConfig.xml
-2. 执行：mvn mybatis-generator:generate
+2. 执行如下代码, 自动生成mapper和model:
+    private void generateArtifacts() throws Exception {
+		List<String> warnings = new ArrayList<>();
+		ConfigurationParser cp = new ConfigurationParser(warnings);
+		Configuration config = cp.parseConfiguration(
+				this.getClass().getResourceAsStream("/generatorConfig.xml"));
+		DefaultShellCallback callback = new DefaultShellCallback(true);
+		MyBatisGenerator myBatisGenerator = new MyBatisGenerator(config, callback, warnings);
+		myBatisGenerator.generate(null);
+	}
 
 
 
