@@ -20,8 +20,10 @@ import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatc
 @Service
 public class CoffeeService {
     private static final String CACHE = "springbucks-coffee";
+
     @Autowired
     private CoffeeRepository coffeeRepository;
+
     @Autowired
     private RedisTemplate<String, Coffee> redisTemplate;
 
@@ -30,6 +32,8 @@ public class CoffeeService {
     }
 
     public Optional<Coffee> findOneCoffee(String name) {
+        // redis可以对多种数据结构进行操作，包括String，Lists，Sets等等。opsForHash操作的就是HASH表。
+        // Redis的散列可以让用户将多个键值对存储到一个Redis键里面
         HashOperations<String, String, Coffee> hashOperations = redisTemplate.opsForHash();
         if (redisTemplate.hasKey(CACHE) && hashOperations.hasKey(CACHE, name)) {
             log.info("Get coffee {} from Redis.", name);
@@ -43,6 +47,7 @@ public class CoffeeService {
         if (coffee.isPresent()) {
             log.info("Put coffee {} to Redis.", name);
             hashOperations.put(CACHE, name, coffee.get());
+            // NOTE: 重要的事情，一定要为key设置缓存时间
             redisTemplate.expire(CACHE, 1, TimeUnit.MINUTES);
         }
         return coffee;

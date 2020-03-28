@@ -10,12 +10,13 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
 
-@Document
+@Document   // 与@Entity注解类似，在Mongo中标识一个文档
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Coffee {
+    // Mongo使用ID字段对表进行自动分割
     @Id
     private String id;
     private String name;

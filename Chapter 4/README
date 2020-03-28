@@ -1,0 +1,100 @@
+================ 通过 Docker 辅助开发 ==============
+
+1. 获取镜像：docker pull mongo
+2. 运行镜像：docker run --name mongo -p 27017:27017 -v ~/docker-data/mongo:/data/db -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=admin -d mongo
+3. 登录容器：docker exec -it mongo bash
+4. 连接MongoDB：mongo -u admin -p admin
+5. 创建数据库：use springbucks;
+6. 创建用户：
+db.createUser(
+    {
+      user: "springbucks",
+      pwd: "springbucks",
+      roles: [
+         { role: "readWrite", db: "springbucks" }
+      ]
+})
+
+===============  Spring Data MongoDB  ==============
+
+1. 添加依赖
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+2. 通过private MongoTemplate mongoTemplat操作MongoDB
+        Coffee espresso = Coffee.builder()
+                .name("espresso")
+                .price(Money.of(CurrencyUnit.of("CNY"), 20.0))
+                .createTime(new Date())
+                .updateTime(new Date()).build();
+        Coffee saved = mongoTemplate.save(espresso);
+        log.info("Coffee {}", saved);
+
+        List<Coffee> list = mongoTemplate.find(
+                Query.query(Criteria.where("name").is("espresso")), Coffee.class);
+        log.info("Find {} Coffee", list.size());
+        list.forEach(c -> log.info("Coffee {}", c));
+3. 通过Repository的方式来操作MongoDB.
+    - 在@SpringBootApplication相同的位置，添加如下注解：@EnableMongoRepositories    // 使用Repository的方式来操作MongoDB，而不是mongoTemplate
+    public interface CoffeeRepository extends MongoRepository<Coffee, String> {
+        List<Coffee> findByName(String name);
+    }
+
+    coffeeRepository.insert(Arrays.asList(espresso, latte));
+    coffeeRepository.findAll(Sort.by("name"))
+            .forEach(c -> log.info("Saved Coffee {}", c));
+
+    Thread.sleep(1000);
+    latte.setPrice(Money.of(CurrencyUnit.of("CNY"), 35.0));
+    latte.setUpdateTime(new Date());
+    coffeeRepository.save(latte);
+    coffeeRepository.findByName("latte")
+            .forEach(c -> log.info("Coffee {}", c));
+    coffeeRepository.deleteAll();
+
+==============   Jedis    ==============
+
+1. 启动Redis：docker pull redis; docker run --name redis -d -p 6379:6379 redis
+2. 支持的客户端 Jedis / Lettuce, RedisTemplate, Repository ⽀支持. 主流方式：jedis
+3. 添加依赖
+        <dependency>
+			<groupId>redis.clients</groupId>
+			<artifactId>jedis</artifactId>
+		</dependency>
+4. Jedis客户端不是线程安全的。需要通过JedisPool获得Jedis实例
+5. 创建并配置Jedis Pool:
+	@Bean
+	@ConfigurationProperties("redis")
+	public JedisPoolConfig jedisPoolConfig() {
+		return new JedisPoolConfig();
+	}
+
+	@Bean(destroyMethod = "close")
+	public JedisPool jedisPool(@Value("${redis.host}") String host) {
+		return new JedisPool(jedisPoolConfig(), host);
+	}
+
+=============    Redis 哨兵与集群模式 ==============
+
+1. 建议都用集群模式
+2. Jedis 只从 Master 读数据，如果想要⾃自动读写分离，可以定制. 现在官方已经不推荐Jedis了.
+3. Lettuce，它在Cluster中也支持读写分离，这个特性Jedis是没有的。
+
+==============   Spring 缓存抽象   ==============
+
+1. 为不不同的缓存提供一层抽象.
+2. 通过注解，为Java方法增加缓存
+3. 缓存执⾏结果支持ConcurrentMap(默认值)、EhCache、Caffeine、JCache(JSR-107)
+
+==============   Spring Redis Template, Repository =========
+
+1. Spring Data Redis 使用Lettuce 而非Jedis，作为它的默认客户端.
+2. 针对服务端是单机、哨兵、集群三种模式，你需要在application.properties中做出不同的配置。
+   具体的配置项目，参见它们的类型定义：
+    LettuceClientConfiguration
+    LettucePoolingClientConfiguration
+    LettuceClientConfigurationBuilderCustomizer
+3. RedisProperties 与 上面三个类的关系是什么？
+
+

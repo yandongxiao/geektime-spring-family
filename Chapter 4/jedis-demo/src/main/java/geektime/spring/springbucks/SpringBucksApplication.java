@@ -25,10 +25,14 @@ import java.util.Map;
 @SpringBootApplication
 @EnableJpaRepositories
 public class SpringBucksApplication implements ApplicationRunner {
+
 	@Autowired
 	private CoffeeService coffeeService;
+
+	// NOTE: 构建bean的方法与bean在同一个类
 	@Autowired
 	private JedisPool jedisPool;
+
 	@Autowired
 	private JedisPoolConfig jedisPoolConfig;
 
@@ -37,12 +41,12 @@ public class SpringBucksApplication implements ApplicationRunner {
 	}
 
 	@Bean
-	@ConfigurationProperties("redis")
+	@ConfigurationProperties("redis")		// 将redis开头的属性，都配置给JedisPoolConfig对象
 	public JedisPoolConfig jedisPoolConfig() {
 		return new JedisPoolConfig();
 	}
 
-	@Bean(destroyMethod = "close")
+	@Bean(destroyMethod = "close")			// 销毁对象之前，调用对象的close方法
 	public JedisPool jedisPool(@Value("${redis.host}") String host) {
 		return new JedisPool(jedisPoolConfig(), host);
 	}
@@ -51,6 +55,7 @@ public class SpringBucksApplication implements ApplicationRunner {
 	public void run(ApplicationArguments args) throws Exception {
 		log.info(jedisPoolConfig.toString());
 
+		// Java try-with-resource 语法糖
 		try (Jedis jedis = jedisPool.getResource()) {
 			coffeeService.findAllCoffee().forEach(c -> {
 				jedis.hset("springbucks-menu",

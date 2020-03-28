@@ -31,6 +31,7 @@ public class SpringBucksApplication implements ApplicationRunner {
 		SpringApplication.run(SpringBucksApplication.class, args);
 	}
 
+	// 创建redisTemplate, 指定KV的类型信息.
 	@Bean
 	public RedisTemplate<String, Coffee> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
 		RedisTemplate<String, Coffee> template = new RedisTemplate<>();

@@ -11,11 +11,16 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+/**
+ *
+ * Spring使用application.properties中的配置，进行设置。
+ * 其中，有一个spring.cache.type指明缓存的类型, 默认值是ConcurrentHashMap.
+ */
 @Slf4j
 @EnableTransactionManagement
 @SpringBootApplication
 @EnableJpaRepositories
-@EnableCaching(proxyTargetClass = true)
+@EnableCaching(proxyTargetClass = true)		// 开启Spring缓存抽象, 采用AOP模式。
 public class SpringBucksApplication implements ApplicationRunner {
 	@Autowired
 	private CoffeeService coffeeService;
