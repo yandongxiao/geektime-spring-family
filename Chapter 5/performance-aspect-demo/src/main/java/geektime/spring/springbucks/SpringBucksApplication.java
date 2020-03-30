@@ -22,29 +22,32 @@ import java.util.Optional;
 @EnableTransactionManagement
 @SpringBootApplication
 @EnableJpaRepositories
-@EnableAspectJAutoProxy
+@EnableAspectJAutoProxy        // 开启对AspectJ的支持
 public class SpringBucksApplication implements ApplicationRunner {
-	@Autowired
-	private CoffeeRepository coffeeRepository;
-	@Autowired
-	private CoffeeService coffeeService;
-	@Autowired
-	private CoffeeOrderService orderService;
 
-	public static void main(String[] args) {
-		SpringApplication.run(SpringBucksApplication.class, args);
-	}
+    @Autowired
+    private CoffeeRepository coffeeRepository;
 
-	@Override
-	public void run(ApplicationArguments args) throws Exception {
-		log.info("All Coffee: {}", coffeeRepository.findAll());
+    @Autowired
+    private CoffeeService coffeeService;
 
-		Optional<Coffee> latte = coffeeService.findOneCoffee("Latte");
-		if (latte.isPresent()) {
-			CoffeeOrder order = orderService.createOrder("Li Lei", latte.get());
-			log.info("Update INIT to PAID: {}", orderService.updateState(order, OrderState.PAID));
-			log.info("Update PAID to INIT: {}", orderService.updateState(order, OrderState.INIT));
-		}
-	}
+    @Autowired
+    private CoffeeOrderService orderService;
+
+    public static void main(String[] args) {
+        SpringApplication.run(SpringBucksApplication.class, args);
+    }
+
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        log.info("All Coffee: {}", coffeeRepository.findAll());
+
+        Optional<Coffee> latte = coffeeService.findOneCoffee("Latte");
+        if (latte.isPresent()) {
+            CoffeeOrder order = orderService.createOrder("Li Lei", latte.get());
+            log.info("Update INIT to PAID: {}", orderService.updateState(order, OrderState.PAID));
+            log.info("Update PAID to INIT: {}", orderService.updateState(order, OrderState.INIT));
+        }
+    }
 }
 

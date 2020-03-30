@@ -28,74 +28,74 @@ import static org.springframework.data.mongodb.core.query.Query.query;
 @SpringBootApplication
 @Slf4j
 public class MongodbDemoApplication implements ApplicationRunner {
-	@Autowired
-	private ReactiveMongoTemplate mongoTemplate;
-	private CountDownLatch cdl = new CountDownLatch(2);
+    @Autowired
+    private ReactiveMongoTemplate mongoTemplate;
+    private CountDownLatch cdl = new CountDownLatch(2);
 
-	public static void main(String[] args) {
-		SpringApplication.run(MongodbDemoApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(MongodbDemoApplication.class, args);
+    }
 
-	@Bean
-	public MongoCustomConversions mongoCustomConversions() {
-		return new MongoCustomConversions(
-				Arrays.asList(new MoneyReadConverter(),
-						new MoneyWriteConverter()));
-	}
+    @Bean
+    public MongoCustomConversions mongoCustomConversions() {
+        return new MongoCustomConversions(
+                Arrays.asList(new MoneyReadConverter(),
+                        new MoneyWriteConverter()));
+    }
 
-	@Override
-	public void run(ApplicationArguments args) throws Exception {
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
 //		startFromInsertion(() -> log.info("Runnable"));
-		startFromInsertion(() -> {
-			log.info("Runnable");
-			decreaseHighPrice();
-		});
+        startFromInsertion(() -> {      // 它是在另外一个线程中完成的.
+            log.info("Runnable");
+            decreaseHighPrice();
+        });
 
-		log.info("after starting");
+        log.info("after starting");
 
 //		decreaseHighPrice();
 
-		cdl.await();
-	}
+        cdl.await();
+    }
 
-	private void startFromInsertion(Runnable runnable) {
-		mongoTemplate.insertAll(initCoffee())
-				.publishOn(Schedulers.elastic())
-				.doOnNext(c -> log.info("Next: {}", c))
-				.doOnComplete(runnable)
-				.doFinally(s -> {
-					cdl.countDown();
-					log.info("Finnally 1, {}", s);
-				})
-				.count()
-				.subscribe(c -> log.info("Insert {} records", c));
-	}
+    private void startFromInsertion(Runnable runnable) {
+        mongoTemplate.insertAll(initCoffee())
+                .publishOn(Schedulers.elastic())            // 这是要在elastic线程池中处理initCoffee()的结果
+                .doOnNext(c -> log.info("Next: {}", c))        // 打印每个Coffee对象
+                .doOnComplete(runnable)                        // 当mongoTemplate将所有数据插入成功后，执行runnable对象
+                .doFinally(s -> {
+                    cdl.countDown();
+                    log.info("Finnally 1, {}", s);
+                })
+                .count()        // 上面的操作返回的是一个Flx
+                .subscribe(c -> log.info("Insert {} records", c));
+    }
 
-	private void decreaseHighPrice() {
-		mongoTemplate.updateMulti(query(where("price").gte(3000L)),
-				new Update().inc("price", -500L)
-						.currentDate("updateTime"), Coffee.class)
-				.doFinally(s -> {
-					cdl.countDown();
-					log.info("Finnally 2, {}", s);
-				})
-				.subscribe(r -> log.info("Result is {}", r));
-	}
+    private void decreaseHighPrice() {
+        mongoTemplate.updateMulti(query(where("price").gte(3000L)),
+                new Update().inc("price", -500L)
+                        .currentDate("updateTime"), Coffee.class)
+                .doFinally(s -> {
+                    cdl.countDown();
+                    log.info("Finnally 2, {}", s);
+                })
+                .subscribe(r -> log.info("Result is {}", r));
+    }
 
-	private List<Coffee> initCoffee() {
-		Coffee espresso = Coffee.builder()
-				.name("espresso")
-				.price(Money.of(CurrencyUnit.of("CNY"), 20.0))
-				.createTime(new Date())
-				.updateTime(new Date())
-				.build();
-		Coffee latte = Coffee.builder()
-				.name("latte")
-				.price(Money.of(CurrencyUnit.of("CNY"), 30.0))
-				.createTime(new Date())
-				.updateTime(new Date())
-				.build();
+    private List<Coffee> initCoffee() {
+        Coffee espresso = Coffee.builder()
+                .name("espresso")
+                .price(Money.of(CurrencyUnit.of("CNY"), 20.0))
+                .createTime(new Date())
+                .updateTime(new Date())
+                .build();
+        Coffee latte = Coffee.builder()
+                .name("latte")
+                .price(Money.of(CurrencyUnit.of("CNY"), 30.0))
+                .createTime(new Date())
+                .updateTime(new Date())
+                .build();
 
-		return Arrays.asList(espresso, latte);
-	}
+        return Arrays.asList(espresso, latte);
+    }
 }

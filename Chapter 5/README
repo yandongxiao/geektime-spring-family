@@ -1,0 +1,38 @@
+================ Reactor =============
+
+1. 以Reactive Programming的方式来访问数据库
+2. 它是非阻塞IO，但是它不是Callback回调方式
+
+================ AOP =================
+
+1. 定义Aspect类: 添加 @Aspect 注解，定义一个切面类
+                 添加 @Component 将它创建为Bean
+2. 添加Pointcut注解
+        @Aspect
+        @Component
+        @Slf4j
+        public class PerformanceAspect {
+        //  @Around("execution(* geektime.spring.springbucks.repository..*(..))")
+            @Around("repositoryOps()")
+            public Object logPerformance(ProceedingJoinPoint pjp) throws Throwable {
+                long startTime = System.currentTimeMillis();
+                String name = "-";
+                String result = "Y";
+                try {
+                    name = pjp.getSignature().toShortString();
+                    return pjp.proceed();
+                } catch (Throwable t) {
+                    result = "N";
+                    throw t;
+                } finally {
+                    long endTime = System.currentTimeMillis();
+                    log.info("{};{};{}ms", name, result, endTime - startTime);
+                }
+            }
+
+            @Pointcut("execution(* geektime.spring.springbucks.repository..*(..))")
+            private void repositoryOps() {
+            }
+        }
+3. Advice: 切面类中的方法，可以添加@Before, @After, @After-throwing, @After-returning, @Around
+        这些注解方法的先后执行顺序，参见: https://blog.csdn.net/rainbow702/article/details/52185827
