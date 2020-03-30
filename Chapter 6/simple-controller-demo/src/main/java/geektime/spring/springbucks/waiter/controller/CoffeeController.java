@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.util.List;
 
 @Controller
-@RequestMapping("/coffee")
+@RequestMapping("/coffee")      // 定义URI前缀
 public class CoffeeController {
     @Autowired
     private CoffeeService coffeeService;

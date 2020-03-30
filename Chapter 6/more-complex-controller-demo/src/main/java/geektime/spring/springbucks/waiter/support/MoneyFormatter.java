@@ -10,6 +10,11 @@ import org.springframework.stereotype.Component;
 import java.text.ParseException;
 import java.util.Locale;
 
+/**
+ * 当用户通过表单的方式，发送请求。你需要将string转换成Money对象。
+ * 这样的一个格式化操作，可以通过MoneyFormatter自动完成。
+ */
+
 @Component
 public class MoneyFormatter implements Formatter<Money> {
     /**

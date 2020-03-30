@@ -44,7 +44,7 @@ public class CoffeeController {
     @PostMapping(path = "/", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @ResponseBody
     @ResponseStatus(HttpStatus.CREATED)
-    public Coffee addCoffee(@Valid NewCoffeeRequest newCoffee,
+    public Coffee addCoffee(@Valid NewCoffeeRequest newCoffee,  // 对请求参数进行检查
                             BindingResult result) {
         if (result.hasErrors()) {
             // 这里先简单处理一下，后续讲到异常处理时会改
@@ -64,7 +64,7 @@ public class CoffeeController {
     @PostMapping(path = "/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseBody
     @ResponseStatus(HttpStatus.CREATED)
-    public List<Coffee> batchAddCoffee(@RequestParam("file") MultipartFile file) {
+    public List<Coffee> batchAddCoffee(@RequestParam("file") MultipartFile file) {      // 如何处理上传的文件？
         List<Coffee> coffees = new ArrayList<>();
         if (!file.isEmpty()) {
             BufferedReader reader = null;

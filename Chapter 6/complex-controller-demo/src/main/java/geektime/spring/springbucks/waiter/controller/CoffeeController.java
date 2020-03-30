@@ -17,6 +17,7 @@ import java.util.List;
 @Controller
 @RequestMapping("/coffee")
 public class CoffeeController {
+
     @Autowired
     private CoffeeService coffeeService;
 

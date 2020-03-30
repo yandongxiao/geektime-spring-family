@@ -21,8 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/order")
 @Slf4j
 public class CoffeeOrderController {
+
     @Autowired
     private CoffeeOrderService orderService;
+
     @Autowired
     private CoffeeService coffeeService;
 

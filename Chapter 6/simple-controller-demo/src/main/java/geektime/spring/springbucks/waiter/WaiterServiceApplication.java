@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
 @EnableJpaRepositories
-@EnableCaching
+@EnableCaching				// 增加缓存抽象的支持
 public class WaiterServiceApplication {
 
 	public static void main(String[] args) {
